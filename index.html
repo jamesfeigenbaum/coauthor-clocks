@@ -403,6 +403,21 @@
             color: var(--text-muted);
         }
 
+        .rel-label {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            margin-left: 0.25rem;
+            vertical-align: middle;
+            letter-spacing: 0.02em;
+        }
+
+        .rel-today { background: var(--green-light); color: var(--green); }
+        .rel-tomorrow { background: var(--amber-light); color: var(--amber); }
+        .rel-yesterday { background: var(--red-light); color: var(--red); }
+
         .clock-col-time.warn {
             color: var(--red);
         }
@@ -1079,12 +1094,12 @@
                 const theirDate = new Date(ty, tm - 1, td);
                 const diffDays = Math.round((theirDate - localDate) / (1000 * 60 * 60 * 24));
 
-                let relLabel = '';
-                if (diffDays === 0) relLabel = ' (Today)';
-                else if (diffDays === 1) relLabel = ' (Tomorrow)';
-                else if (diffDays === -1) relLabel = ' (Yesterday)';
+                let relBadge = '';
+                if (diffDays === 0) relBadge = '<span class="rel-label rel-today">Today</span>';
+                else if (diffDays === 1) relBadge = '<span class="rel-label rel-tomorrow">Tomorrow</span>';
+                else if (diffDays === -1) relBadge = '<span class="rel-label rel-yesterday">Yesterday</span>';
 
-                dateEl.textContent = theirDisplay + relLabel;
+                dateEl.innerHTML = theirDisplay + relBadge;
             });
         }
 
@@ -1118,14 +1133,14 @@
                 const theirDate = new Date(ty, tm - 1, td);
                 const diffDays = Math.round((theirDate - localDate) / (1000 * 60 * 60 * 24));
 
-                let relLabel = '';
-                if (diffDays === 0) relLabel = ' (Today)';
-                else if (diffDays === 1) relLabel = ' (Tomorrow)';
-                else if (diffDays === -1) relLabel = ' (Yesterday)';
+                let relBadge = '';
+                if (diffDays === 0) relBadge = '<span class="rel-label rel-today">Today</span>';
+                else if (diffDays === 1) relBadge = '<span class="rel-label rel-tomorrow">Tomorrow</span>';
+                else if (diffDays === -1) relBadge = '<span class="rel-label rel-yesterday">Yesterday</span>';
 
                 timeEl.textContent = theirTime;
                 timeEl.classList.toggle('warn', isOdd);
-                dateEl.textContent = theirDisplay + relLabel + (isOdd ? ' ⚠️' : '');
+                dateEl.innerHTML = theirDisplay + relBadge + (isOdd ? ' ⚠️' : '');
             });
         }
 
