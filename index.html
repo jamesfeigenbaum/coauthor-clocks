@@ -348,6 +348,11 @@
             color: var(--red);
         }
 
+        .you-card {
+            border-color: var(--accent-light);
+            background: linear-gradient(135deg, var(--card-bg) 0%, #fdf5f2 100%);
+        }
+
         .clock-header {
             display: flex;
             align-items: baseline;
@@ -1060,17 +1065,41 @@
             const empty = document.getElementById('emptyState');
             const bar = document.getElementById('scheduleBar');
 
+            const userTzLabel = TZ_OPTIONS.find(o => o.tz === userTz)?.label || userTz;
+            const youCard = `
+      <div class="clock-card you-card" data-tz="${userTz}">
+        <div class="clock-header">
+          <span class="clock-name">You</span>
+          <span class="clock-location">${escHtml(userTzLabel)}</span>
+          <span class="clock-offset offset-same">Your time</span>
+        </div>
+        <div class="clock-times">
+          <div class="clock-col">
+            <div class="clock-col-label">Now</div>
+            <div class="clock-col-time" id="time-you">--:--</div>
+            <div class="clock-col-date" id="date-you"></div>
+          </div>
+          <div class="clock-divider"></div>
+          <div class="clock-col" id="sched-col-you" style="display:none;">
+            <div class="clock-col-label">Your call time</div>
+            <div class="clock-col-time" id="sched-time-you">--:--</div>
+            <div class="clock-col-date" id="sched-date-you"></div>
+          </div>
+        </div>
+      </div>`;
+
             if (coauthors.length === 0) {
-                grid.innerHTML = '';
+                grid.innerHTML = youCard;
                 empty.style.display = '';
                 bar.style.display = 'none';
+                updateTimes();
                 return;
             }
 
             empty.style.display = 'none';
             bar.style.display = '';
 
-            grid.innerHTML = coauthors.map((c, i) => {
+            grid.innerHTML = youCard + coauthors.map((c, i) => {
                 const diff = getOffsetDiff(c.tz);
                 const offset = formatOffsetLabel(diff);
                 return `
@@ -1104,6 +1133,16 @@
         function updateTimes() {
             const now = new Date();
             const localDateStr = now.toLocaleDateString('en-US', { timeZone: userTz, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+            const youTimeEl = document.getElementById('time-you');
+            const youDateEl = document.getElementById('date-you');
+            if (youTimeEl) {
+                youTimeEl.textContent = now.toLocaleTimeString('en-US', {
+                    timeZone: userTz, hour: '2-digit', minute: '2-digit', hour12: true
+                });
+                const youDisplay = now.toLocaleDateString('en-US', { timeZone: userTz, weekday: 'short', month: 'short', day: 'numeric' });
+                youDateEl.innerHTML = youDisplay + '<span class="rel-label rel-today">Today</span>';
+            }
 
             coauthors.forEach(c => {
                 const timeEl = document.getElementById(`time-${c.id}`);
@@ -1139,6 +1178,18 @@
             const now = new Date();
             const local = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
             const localDateStr = local.toLocaleDateString('en-US', { timeZone: userTz, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+            const youCol = document.getElementById('sched-col-you');
+            const youSchedTimeEl = document.getElementById('sched-time-you');
+            const youSchedDateEl = document.getElementById('sched-date-you');
+            if (youCol && youSchedTimeEl) {
+                youCol.style.display = '';
+                youSchedTimeEl.textContent = local.toLocaleTimeString('en-US', {
+                    timeZone: userTz, hour: 'numeric', minute: '2-digit', hour12: true
+                });
+                const yourDisplay = local.toLocaleDateString('en-US', { timeZone: userTz, weekday: 'short', month: 'short', day: 'numeric' });
+                youSchedDateEl.innerHTML = yourDisplay + '<span class="rel-label rel-today">Today</span>';
+            }
 
             coauthors.forEach(c => {
                 const col = document.getElementById(`sched-col-${c.id}`);
