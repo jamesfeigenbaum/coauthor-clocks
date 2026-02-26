@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coauthor Clocks</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f6f2ec;
+            --card-bg: #fffdf9;
+            --text: #2c2418;
+            --text-muted: #8a7e6e;
+            --accent: #c4593a;
+            --accent-light: #f0d8cf;
+            --border: #e5ddd1;
+            --shadow: rgba(44, 36, 24, 0.06);
+            --shadow-lg: rgba(44, 36, 24, 0.1);
+            --green: #4a8c5c;
+            --green-light: #e2f0e5;
+            --amber: #b8860b;
+            --amber-light: #fdf3dc;
+            --red: #a84432;
+            --red-light: #f5ddd8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            animation: fadeDown 0.6s ease-out;
+        }
+
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.2rem;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Add form */
+        .add-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: start;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px var(--shadow);
+            animation: fadeUp 0.5s ease-out 0.1s both;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            flex: 1;
+            min-width: 160px;
+            position: relative;
+        }
+
+        .field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            height: 1.1em;
+            line-height: 1.1em;
+        }
+
+        .field input,
+        .field select {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .field select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a7e6e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            padding-right: 2rem;
+        }
+
+        .tz-resolved {
+            font-size: 0.72rem;
+            color: var(--green);
+            font-weight: 500;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 0.15rem;
+            transition: opacity 0.2s;
+        }
+
+        /* Autocomplete dropdown */
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px var(--shadow-lg);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .autocomplete-list.open {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 0.55rem 0.8rem;
+            cursor: pointer;
+            font-size: 0.88rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.active {
+            background: var(--accent-light);
+        }
+
+        .autocomplete-item .ac-loc {
+            font-weight: 500;
+        }
+
+        .autocomplete-item .ac-tz {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            margin-top: 1.4rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 2px 6px rgba(196, 89, 58, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #b34e32;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(196, 89, 58, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Schedule bar */
+        .schedule-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px var(--shadow);
+            animation: fadeUp 0.5s ease-out 0.15s both;
+        }
+
+        .schedule-bar h3 {
+            font-family: 'DM Serif Display', serif;
+            font-weight: 400;
+            font-size: 1.05rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .schedule-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .schedule-controls input[type="time"] {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+        }
+
+        .schedule-controls input[type="time"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        /* Clock grid */
+        .clocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .clock-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            box-shadow: 0 1px 3px var(--shadow);
+            transition: box-shadow 0.3s, transform 0.3s;
+            animation: fadeUp 0.4s ease-out both;
+        }
+
+        .clock-card:hover {
+            box-shadow: 0 6px 20px var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .clock-card .remove-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            opacity: 0;
+        }
+
+        .clock-card:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .clock-card .remove-btn:hover {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .clock-header {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .clock-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .clock-location {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .clock-offset {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            letter-spacing: 0.02em;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .offset-same {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .offset-close {
+            background: var(--amber-light);
+            color: var(--amber);
+        }
+
+        .offset-far {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .clock-times {
+            display: flex;
+            gap: 1.25rem;
+        }
+
+        .clock-col {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .clock-col-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .clock-col-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.35rem;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            margin-bottom: 0.2rem;
+        }
+
+        .clock-col-date {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .clock-col-time.warn {
+            color: var(--red);
+        }
+
+        .clock-divider {
+            width: 1px;
+            background: var(--border);
+            align-self: stretch;
+            flex-shrink: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            animation: fadeUp 0.5s ease-out 0.2s both;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.7rem;
+            }
+
+            .add-form {
+                padding: 1rem;
+                flex-direction: column;
+            }
+
+            .field {
+                min-width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .clocks-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Coauthor Clocks</h1>
+            <p>Stop doing timezone math in your head</p>
+        </header>
+
+        <div class="add-form">
+            <div class="field">
+                <label>Name</label>
+                <input type="text" id="nameInput" placeholder="e.g. Sarah Chen" autocomplete="off">
+                <div class="autocomplete-list" id="nameAcList"></div>
+            </div>
+            <div class="field" id="locationField">
+                <label>City or University</label>
+                <input type="text" id="locationInput" placeholder="e.g. London, LSE, Stanford..." autocomplete="off">
+                <div class="autocomplete-list" id="acList"></div>
+                <div class="tz-resolved" id="tzResolved"></div>
+            </div>
+            <div class="field">
+                <label>Timezone (auto-filled)</label>
+                <select id="tzSelect"></select>
+            </div>
+            <button class="btn btn-primary" onclick="addCoauthor()">Add</button>
+        </div>
+
+        <div class="schedule-bar" id="scheduleBar" style="display:none;">
+            <h3>Find a meeting time</h3>
+            <div class="schedule-controls">
+                <span style="font-size:0.85rem; color:var(--text-muted);">If I set a call for</span>
+                <input type="time" id="scheduleTime" value="14:00">
+                <span style="font-size:0.85rem; color:var(--text-muted);">my time, it will be:</span>
+            </div>
+        </div>
+
+        <div class="clocks-grid" id="clocksGrid"></div>
+        <div class="empty-state" id="emptyState"></div>
+    </div>
+
+    <script>
+        // ── Location → Timezone database ──
+        // Covers major academic cities, universities, and metro areas
+        const LOCATIONS = [
+            // US & Canada
+            { names: ["boston", "bu", "boston university", "mit", "harvard", "cambridge ma", "northeastern", "tufts", "bc", "boston college", "nber"], tz: "America/New_York", display: "Boston" },
+            { names: ["new york", "nyc", "columbia", "nyu", "new york university", "cuny", "barnard", "manhattan", "brooklyn", "fed ny", "ny fed"], tz: "America/New_York", display: "New York" },
+            { names: ["new haven", "yale"], tz: "America/New_York", display: "New Haven" },
+            { names: ["princeton"], tz: "America/New_York", display: "Princeton" },
+            { names: ["philadelphia", "penn", "upenn", "wharton", "drexel", "temple"], tz: "America/New_York", display: "Philadelphia" },
+            { names: ["washington dc", "dc", "georgetown", "george washington", "gwu", "american university", "fed", "federal reserve", "imf", "world bank", "brookings"], tz: "America/New_York", display: "Washington DC" },
+            { names: ["pittsburgh", "carnegie mellon", "cmu", "pitt"], tz: "America/New_York", display: "Pittsburgh" },
+            { names: ["baltimore", "johns hopkins", "jhu"], tz: "America/New_York", display: "Baltimore" },
+            { names: ["durham", "duke"], tz: "America/New_York", display: "Durham, NC" },
+            { names: ["chapel hill", "unc"], tz: "America/New_York", display: "Chapel Hill" },
+            { names: ["charlottesville", "uva", "virginia"], tz: "America/New_York", display: "Charlottesville" },
+            { names: ["atlanta", "emory", "georgia tech"], tz: "America/New_York", display: "Atlanta" },
+            { names: ["miami", "university of miami"], tz: "America/New_York", display: "Miami" },
+            { names: ["rochester"], tz: "America/New_York", display: "Rochester" },
+            { names: ["ithaca", "cornell"], tz: "America/New_York", display: "Ithaca" },
+            { names: ["hanover", "dartmouth"], tz: "America/New_York", display: "Hanover, NH" },
+            { names: ["providence", "brown"], tz: "America/New_York", display: "Providence" },
+            { names: ["amherst", "umass"], tz: "America/New_York", display: "Amherst" },
+            { names: ["ann arbor", "michigan", "umich", "u of m"], tz: "America/New_York", display: "Ann Arbor" },
+            { names: ["chicago", "uchicago", "university of chicago", "booth", "northwestern", "evanston", "chicago fed", "fed chicago"], tz: "America/Chicago", display: "Chicago" },
+            { names: ["madison", "uw madison", "wisconsin", "uw"], tz: "America/Chicago", display: "Madison" },
+            { names: ["minneapolis", "minnesota", "u of mn", "minneapolis fed"], tz: "America/Chicago", display: "Minneapolis" },
+            { names: ["st louis", "saint louis", "wash u", "washu", "wustl", "st louis fed"], tz: "America/Chicago", display: "St. Louis" },
+            { names: ["austin", "ut austin", "texas", "ut"], tz: "America/Chicago", display: "Austin" },
+            { names: ["houston", "rice"], tz: "America/Chicago", display: "Houston" },
+            { names: ["dallas"], tz: "America/Chicago", display: "Dallas" },
+            { names: ["iowa city", "iowa", "uiowa"], tz: "America/Chicago", display: "Iowa City" },
+            { names: ["champaign", "urbana", "uiuc", "illinois"], tz: "America/Chicago", display: "Champaign" },
+            { names: ["bloomington", "indiana", "iu"], tz: "America/New_York", display: "Bloomington, IN" },
+            { names: ["columbus", "ohio state", "osu"], tz: "America/New_York", display: "Columbus" },
+            { names: ["nashville", "vanderbilt"], tz: "America/Chicago", display: "Nashville" },
+            { names: ["notre dame"], tz: "America/New_York", display: "Notre Dame" },
+            { names: ["denver", "colorado", "cu boulder", "boulder"], tz: "America/Denver", display: "Denver / Boulder" },
+            { names: ["salt lake city", "utah", "byu", "brigham young"], tz: "America/Denver", display: "Salt Lake City" },
+            { names: ["los angeles", "la", "ucla", "usc", "caltech", "pasadena", "claremont"], tz: "America/Los_Angeles", display: "Los Angeles" },
+            { names: ["san francisco", "sf", "ucsf"], tz: "America/Los_Angeles", display: "San Francisco" },
+            { names: ["berkeley", "uc berkeley", "cal"], tz: "America/Los_Angeles", display: "Berkeley" },
+            { names: ["stanford", "palo alto"], tz: "America/Los_Angeles", display: "Stanford" },
+            { names: ["san diego", "ucsd"], tz: "America/Los_Angeles", display: "San Diego" },
+            { names: ["davis", "uc davis"], tz: "America/Los_Angeles", display: "Davis" },
+            { names: ["santa barbara", "ucsb"], tz: "America/Los_Angeles", display: "Santa Barbara" },
+            { names: ["santa cruz", "ucsc"], tz: "America/Los_Angeles", display: "Santa Cruz" },
+            { names: ["irvine", "uci"], tz: "America/Los_Angeles", display: "Irvine" },
+            { names: ["seattle", "uw", "university of washington"], tz: "America/Los_Angeles", display: "Seattle" },
+            { names: ["portland", "portland state", "reed"], tz: "America/Los_Angeles", display: "Portland" },
+            { names: ["vancouver", "ubc", "sfu"], tz: "America/Los_Angeles", display: "Vancouver" },
+            { names: ["honolulu", "hawaii", "uh"], tz: "Pacific/Honolulu", display: "Honolulu" },
+            { names: ["toronto", "u of t", "uoft", "york university"], tz: "America/Toronto", display: "Toronto" },
+            { names: ["montreal", "mcgill", "hec montreal", "udem"], tz: "America/Toronto", display: "Montreal" },
+            { names: ["ottawa", "carleton"], tz: "America/Toronto", display: "Ottawa" },
+            { names: ["edmonton", "alberta", "u of a"], tz: "America/Edmonton", display: "Edmonton" },
+            { names: ["calgary"], tz: "America/Edmonton", display: "Calgary" },
+
+            // UK & Ireland
+            { names: ["london", "lse", "ucl", "imperial", "king's college", "kings college", "soas", "qmul", "birkbeck", "ifs", "bank of england", "cepr"], tz: "Europe/London", display: "London" },
+            { names: ["oxford", "nuffield", "oxford university"], tz: "Europe/London", display: "Oxford" },
+            { names: ["cambridge", "cambridge uk", "cambridge university"], tz: "Europe/London", display: "Cambridge, UK" },
+            { names: ["edinburgh"], tz: "Europe/London", display: "Edinburgh" },
+            { names: ["warwick"], tz: "Europe/London", display: "Warwick" },
+            { names: ["manchester"], tz: "Europe/London", display: "Manchester" },
+            { names: ["bristol"], tz: "Europe/London", display: "Bristol" },
+            { names: ["nottingham"], tz: "Europe/London", display: "Nottingham" },
+            { names: ["glasgow"], tz: "Europe/London", display: "Glasgow" },
+            { names: ["dublin", "trinity college dublin", "tcd", "ucd"], tz: "Europe/Dublin", display: "Dublin" },
+
+            // Western & Central Europe
+            { names: ["paris", "pse", "sciences po", "ehess", "paris school of economics", "hec paris", "insee", "ined"], tz: "Europe/Paris", display: "Paris" },
+            { names: ["toulouse", "tse", "toulouse school"], tz: "Europe/Paris", display: "Toulouse" },
+            { names: ["lyon"], tz: "Europe/Paris", display: "Lyon" },
+            { names: ["marseille"], tz: "Europe/Paris", display: "Marseille" },
+            { names: ["berlin", "humboldt", "fu berlin", "diw", "wzb"], tz: "Europe/Berlin", display: "Berlin" },
+            { names: ["munich", "munchen", "lmu", "ifo", "max planck"], tz: "Europe/Berlin", display: "Munich" },
+            { names: ["bonn", "iza", "briq"], tz: "Europe/Berlin", display: "Bonn" },
+            { names: ["mannheim", "zew"], tz: "Europe/Berlin", display: "Mannheim" },
+            { names: ["frankfurt", "ecb", "european central bank"], tz: "Europe/Berlin", display: "Frankfurt" },
+            { names: ["hamburg"], tz: "Europe/Berlin", display: "Hamburg" },
+            { names: ["cologne", "koln"], tz: "Europe/Berlin", display: "Cologne" },
+            { names: ["amsterdam", "uva", "vu amsterdam", "tinbergen"], tz: "Europe/Amsterdam", display: "Amsterdam" },
+            { names: ["rotterdam", "erasmus"], tz: "Europe/Amsterdam", display: "Rotterdam" },
+            { names: ["tilburg"], tz: "Europe/Amsterdam", display: "Tilburg" },
+            { names: ["brussels", "bruegel", "ecares", "ulb"], tz: "Europe/Brussels", display: "Brussels" },
+            { names: ["leuven", "ku leuven"], tz: "Europe/Brussels", display: "Leuven" },
+            { names: ["zurich", "eth", "eth zurich", "uzh"], tz: "Europe/Zurich", display: "Zurich" },
+            { names: ["geneva", "graduate institute", "iheid"], tz: "Europe/Zurich", display: "Geneva" },
+            { names: ["lausanne", "epfl"], tz: "Europe/Zurich", display: "Lausanne" },
+            { names: ["vienna", "iiasa"], tz: "Europe/Vienna", display: "Vienna" },
+            { names: ["rome", "luiss", "banca d'italia"], tz: "Europe/Rome", display: "Rome" },
+            { names: ["milan", "bocconi", "bocconi university"], tz: "Europe/Rome", display: "Milan" },
+            { names: ["bologna"], tz: "Europe/Rome", display: "Bologna" },
+            { names: ["madrid", "carlos iii", "uc3m", "cemfi", "banco de espana"], tz: "Europe/Madrid", display: "Madrid" },
+            { names: ["barcelona", "upf", "pompeu fabra", "crei", "iab"], tz: "Europe/Madrid", display: "Barcelona" },
+            { names: ["lisbon", "nova sbe"], tz: "Europe/Lisbon", display: "Lisbon" },
+            { names: ["copenhagen", "ku", "copenhagen business school", "cbs"], tz: "Europe/Copenhagen", display: "Copenhagen" },
+            { names: ["stockholm", "sse", "stockholm school", "su", "iies", "riksbank"], tz: "Europe/Stockholm", display: "Stockholm" },
+            { names: ["oslo", "nho"], tz: "Europe/Oslo", display: "Oslo" },
+            { names: ["helsinki", "aalto"], tz: "Europe/Helsinki", display: "Helsinki" },
+            { names: ["prague", "cerge"], tz: "Europe/Prague", display: "Prague" },
+            { names: ["warsaw"], tz: "Europe/Warsaw", display: "Warsaw" },
+            { names: ["budapest", "ceu"], tz: "Europe/Budapest", display: "Budapest" },
+
+            // Eastern Europe & Turkey
+            { names: ["moscow", "hse", "higher school of economics", "nes"], tz: "Europe/Moscow", display: "Moscow" },
+            { names: ["istanbul", "bilkent", "sabanci", "koc", "bogazici"], tz: "Europe/Istanbul", display: "Istanbul" },
+            { names: ["ankara"], tz: "Europe/Istanbul", display: "Ankara" },
+            { names: ["athens", "athens university"], tz: "Europe/Athens", display: "Athens" },
+
+            // Middle East
+            { names: ["tel aviv", "tau", "hebrew university", "jerusalem", "technion", "haifa", "idc herzliya", "reichman"], tz: "Asia/Jerusalem", display: "Israel" },
+            { names: ["dubai", "abu dhabi", "nyu abu dhabi", "nyuad"], tz: "Asia/Dubai", display: "Dubai / Abu Dhabi" },
+            { names: ["doha", "qatar"], tz: "Asia/Qatar", display: "Doha" },
+            { names: ["riyadh", "kaust", "saudi"], tz: "Asia/Riyadh", display: "Riyadh" },
+
+            // South & Southeast Asia
+            { names: ["delhi", "new delhi", "jnu", "iit delhi", "dse", "delhi school", "isi delhi"], tz: "Asia/Kolkata", display: "Delhi" },
+            { names: ["mumbai", "bombay", "iit bombay", "igidr"], tz: "Asia/Kolkata", display: "Mumbai" },
+            { names: ["bangalore", "bengaluru", "iisc", "isb", "iim bangalore"], tz: "Asia/Kolkata", display: "Bangalore" },
+            { names: ["kolkata", "calcutta", "isi", "isi kolkata", "indian statistical institute"], tz: "Asia/Kolkata", display: "Kolkata" },
+            { names: ["chennai", "madras", "iit madras"], tz: "Asia/Kolkata", display: "Chennai" },
+            { names: ["hyderabad", "isb hyderabad"], tz: "Asia/Kolkata", display: "Hyderabad" },
+            { names: ["dhaka", "bangladesh"], tz: "Asia/Dhaka", display: "Dhaka" },
+            { names: ["bangkok", "chulalongkorn"], tz: "Asia/Bangkok", display: "Bangkok" },
+            { names: ["singapore", "nus", "ntu", "smu", "insead asia"], tz: "Asia/Singapore", display: "Singapore" },
+            { names: ["kuala lumpur", "kl"], tz: "Asia/Kuala_Lumpur", display: "Kuala Lumpur" },
+            { names: ["jakarta"], tz: "Asia/Jakarta", display: "Jakarta" },
+            { names: ["manila"], tz: "Asia/Manila", display: "Manila" },
+            { names: ["hanoi", "ho chi minh"], tz: "Asia/Ho_Chi_Minh", display: "Vietnam" },
+
+            // East Asia
+            { names: ["beijing", "peking", "pku", "tsinghua", "renmin"], tz: "Asia/Shanghai", display: "Beijing" },
+            { names: ["shanghai", "fudan", "sjtu"], tz: "Asia/Shanghai", display: "Shanghai" },
+            { names: ["hong kong", "hku", "hkust", "cuhk", "cityu"], tz: "Asia/Hong_Kong", display: "Hong Kong" },
+            { names: ["taipei", "ntu taiwan", "academia sinica"], tz: "Asia/Taipei", display: "Taipei" },
+            { names: ["tokyo", "todai", "university of tokyo", "keio", "waseda", "hitotsubashi"], tz: "Asia/Tokyo", display: "Tokyo" },
+            { names: ["osaka"], tz: "Asia/Tokyo", display: "Osaka" },
+            { names: ["kyoto", "kyoto university"], tz: "Asia/Tokyo", display: "Kyoto" },
+            { names: ["seoul", "snu", "kaist", "yonsei", "korea university"], tz: "Asia/Seoul", display: "Seoul" },
+
+            // Oceania
+            { names: ["sydney", "unsw", "usyd", "university of sydney", "macquarie"], tz: "Australia/Sydney", display: "Sydney" },
+            { names: ["melbourne", "unimelb", "monash"], tz: "Australia/Melbourne", display: "Melbourne" },
+            { names: ["canberra", "anu", "australian national"], tz: "Australia/Sydney", display: "Canberra" },
+            { names: ["brisbane", "uq", "queensland"], tz: "Australia/Brisbane", display: "Brisbane" },
+            { names: ["perth", "uwa"], tz: "Australia/Perth", display: "Perth" },
+            { names: ["adelaide"], tz: "Australia/Adelaide", display: "Adelaide" },
+            { names: ["auckland", "university of auckland"], tz: "Pacific/Auckland", display: "Auckland" },
+            { names: ["wellington", "victoria university"], tz: "Pacific/Auckland", display: "Wellington" },
+
+            // Latin America
+            { names: ["mexico city", "unam", "colmex", "itam", "cide", "banco de mexico"], tz: "America/Mexico_City", display: "Mexico City" },
+            { names: ["monterrey", "itesm", "tec de monterrey"], tz: "America/Monterrey", display: "Monterrey" },
+            { names: ["sao paulo", "são paulo", "usp", "fgv", "insper"], tz: "America/Sao_Paulo", display: "São Paulo" },
+            { names: ["rio", "rio de janeiro", "puc rio"], tz: "America/Sao_Paulo", display: "Rio de Janeiro" },
+            { names: ["buenos aires", "uba", "utdt", "di tella", "udesa"], tz: "America/Argentina/Buenos_Aires", display: "Buenos Aires" },
+            { names: ["santiago", "chile", "puc chile", "universidad de chile"], tz: "America/Santiago", display: "Santiago" },
+            { names: ["bogota", "bogotá", "uniandes", "los andes"], tz: "America/Bogota", display: "Bogotá" },
+            { names: ["lima", "pucp"], tz: "America/Lima", display: "Lima" },
+
+            // Africa
+            { names: ["cairo", "auc"], tz: "Africa/Cairo", display: "Cairo" },
+            { names: ["cape town", "uct", "stellenbosch"], tz: "Africa/Johannesburg", display: "Cape Town" },
+            { names: ["johannesburg", "wits"], tz: "Africa/Johannesburg", display: "Johannesburg" },
+            { names: ["nairobi"], tz: "Africa/Nairobi", display: "Nairobi" },
+            { names: ["lagos"], tz: "Africa/Lagos", display: "Lagos" },
+            { names: ["accra"], tz: "Africa/Accra", display: "Accra" },
+        ];
+
+        // ── Timezone select options ──
+        const TZ_OPTIONS = [
+            { label: "US Eastern (Boston, NYC)", tz: "America/New_York" },
+            { label: "US Central (Chicago)", tz: "America/Chicago" },
+            { label: "US Mountain (Denver)", tz: "America/Denver" },
+            { label: "US Pacific (LA, Berkeley)", tz: "America/Los_Angeles" },
+            { label: "Hawaii", tz: "Pacific/Honolulu" },
+            { label: "Canada Atlantic (Halifax)", tz: "America/Halifax" },
+            { label: "Mexico City", tz: "America/Mexico_City" },
+            { label: "São Paulo / Buenos Aires", tz: "America/Sao_Paulo" },
+            { label: "Santiago", tz: "America/Santiago" },
+            { label: "Bogotá / Lima", tz: "America/Bogota" },
+            { label: "UK / Ireland (London, Oxford)", tz: "Europe/London" },
+            { label: "Western Europe (Paris, Berlin)", tz: "Europe/Paris" },
+            { label: "Central Europe (Zurich, Rome)", tz: "Europe/Zurich" },
+            { label: "Eastern Europe (Helsinki, Athens)", tz: "Europe/Helsinki" },
+            { label: "Turkey (Istanbul)", tz: "Europe/Istanbul" },
+            { label: "Israel", tz: "Asia/Jerusalem" },
+            { label: "Moscow", tz: "Europe/Moscow" },
+            { label: "Dubai / Abu Dhabi", tz: "Asia/Dubai" },
+            { label: "India", tz: "Asia/Kolkata" },
+            { label: "Bangladesh (Dhaka)", tz: "Asia/Dhaka" },
+            { label: "Thailand (Bangkok)", tz: "Asia/Bangkok" },
+            { label: "Singapore / Malaysia", tz: "Asia/Singapore" },
+            { label: "China (Beijing, Shanghai)", tz: "Asia/Shanghai" },
+            { label: "Hong Kong", tz: "Asia/Hong_Kong" },
+            { label: "Japan (Tokyo)", tz: "Asia/Tokyo" },
+            { label: "Korea (Seoul)", tz: "Asia/Seoul" },
+            { label: "Australia Eastern (Sydney)", tz: "Australia/Sydney" },
+            { label: "Australia Central (Adelaide)", tz: "Australia/Adelaide" },
+            { label: "Australia Western (Perth)", tz: "Australia/Perth" },
+            { label: "New Zealand (Auckland)", tz: "Pacific/Auckland" },
+        ];
+
+        const tzSelect = document.getElementById('tzSelect');
+        TZ_OPTIONS.forEach(opt => {
+            const el = document.createElement('option');
+            el.value = opt.tz;
+            el.textContent = opt.label;
+            tzSelect.appendChild(el);
+        });
+
+        const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const matchIdx = TZ_OPTIONS.findIndex(o => o.tz === userTz);
+        if (matchIdx >= 0) tzSelect.selectedIndex = matchIdx;
+
+        // ── Autocomplete logic ──
+        const locationInput = document.getElementById('locationInput');
+        const acList = document.getElementById('acList');
+        const tzResolved = document.getElementById('tzResolved');
+        let acItems = [];
+        let acIndex = -1;
+
+        function searchLocations(query) {
+            if (!query || query.length < 2) return [];
+            const q = query.toLowerCase().trim();
+            const results = [];
+            for (const loc of LOCATIONS) {
+                for (const name of loc.names) {
+                    if (name.includes(q) || q.includes(name)) {
+                        results.push(loc);
+                        break;
+                    }
+                }
+                if (results.length >= 8) break;
+            }
+            return results;
+        }
+
+        function showAutocomplete(results) {
+            if (results.length === 0) {
+                acList.classList.remove('open');
+                acItems = [];
+                acIndex = -1;
+                return;
+            }
+            acItems = results;
+            acIndex = -1;
+            acList.innerHTML = results.map((r, i) => {
+                const tzLabel = TZ_OPTIONS.find(o => o.tz === r.tz)?.label || r.tz;
+                return `<div class="autocomplete-item" data-index="${i}">
+      <span class="ac-loc">${r.display}</span>
+      <span class="ac-tz">${tzLabel}</span>
+    </div>`;
+            }).join('');
+            acList.classList.add('open');
+
+            acList.querySelectorAll('.autocomplete-item').forEach(el => {
+                el.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    selectAc(parseInt(el.dataset.index));
+                });
+            });
+        }
+
+        function selectAc(index) {
+            const loc = acItems[index];
+            if (!loc) return;
+            locationInput.value = loc.display;
+
+            // Set timezone dropdown
+            const tzIdx = TZ_OPTIONS.findIndex(o => o.tz === loc.tz);
+            if (tzIdx >= 0) {
+                tzSelect.selectedIndex = tzIdx;
+            } else {
+                // If not in dropdown, add it temporarily
+                const opt = document.createElement('option');
+                opt.value = loc.tz;
+                opt.textContent = loc.display + ' (' + loc.tz + ')';
+                tzSelect.appendChild(opt);
+                tzSelect.value = loc.tz;
+            }
+
+            tzResolved.textContent = '✓ ' + loc.tz;
+            acList.classList.remove('open');
+            acItems = [];
+            acIndex = -1;
+        }
+
+        locationInput.addEventListener('input', () => {
+            const val = locationInput.value;
+            const results = searchLocations(val);
+            showAutocomplete(results);
+
+            // Also try to auto-resolve without dropdown
+            if (results.length === 1) {
+                const loc = results[0];
+                const tzIdx = TZ_OPTIONS.findIndex(o => o.tz === loc.tz);
+                if (tzIdx >= 0) tzSelect.selectedIndex = tzIdx;
+                tzResolved.textContent = '✓ ' + loc.tz;
+            } else if (val.length < 2) {
+                tzResolved.textContent = '';
+            }
+        });
+
+        locationInput.addEventListener('keydown', (e) => {
+            if (!acList.classList.contains('open')) {
+                if (e.key === 'Enter') addCoauthor();
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                acIndex = Math.min(acIndex + 1, acItems.length - 1);
+                highlightAc();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                acIndex = Math.max(acIndex - 1, 0);
+                highlightAc();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (acIndex >= 0) selectAc(acIndex);
+                else if (acItems.length > 0) selectAc(0);
+                else addCoauthor();
+            } else if (e.key === 'Escape') {
+                acList.classList.remove('open');
+            }
+        });
+
+        locationInput.addEventListener('blur', () => {
+            setTimeout(() => acList.classList.remove('open'), 150);
+        });
+
+        function highlightAc() {
+            acList.querySelectorAll('.autocomplete-item').forEach((el, i) => {
+                el.classList.toggle('active', i === acIndex);
+            });
+        }
+
+        // ── Data & rendering ──
+        // Safe localStorage wrapper for sandboxed environments
+        const store = {
+            get(key, fallback) {
+                try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+                catch { return fallback; }
+            },
+            set(key, val) {
+                try { localStorage.setItem(key, JSON.stringify(val)); }
+                catch { }
+            }
+        };
+
+        // Roster: every person ever added, keyed by lowercase name
+        let roster = store.get('coauthorRoster', {});
+        // Active: currently displayed coauthors
+        let coauthors = store.get('coauthorClocks', []);
+
+        function save() {
+            store.set('coauthorClocks', coauthors);
+            store.set('coauthorRoster', roster);
+        }
+
+        // ── Name autocomplete ──
+        const nameInput = document.getElementById('nameInput');
+        const nameAcList = document.getElementById('nameAcList');
+        let nameAcItems = [];
+        let nameAcIndex = -1;
+
+        function searchRoster(query) {
+            if (!query || query.length < 1) return [];
+            const q = query.toLowerCase().trim();
+            const results = [];
+            // Also exclude people already active
+            const activeNames = new Set(coauthors.map(c => c.name.toLowerCase()));
+            for (const [key, person] of Object.entries(roster)) {
+                if (activeNames.has(key)) continue;
+                if (key.includes(q) || person.name.toLowerCase().includes(q)) {
+                    results.push(person);
+                }
+                if (results.length >= 6) break;
+            }
+            return results;
+        }
+
+        function showNameAc(results) {
+            if (results.length === 0) {
+                nameAcList.classList.remove('open');
+                nameAcItems = [];
+                nameAcIndex = -1;
+                return;
+            }
+            nameAcItems = results;
+            nameAcIndex = -1;
+            nameAcList.innerHTML = results.map((r, i) => {
+                return `<div class="autocomplete-item" data-index="${i}">
+      <span class="ac-loc">${escHtml(r.name)}</span>
+      <span class="ac-tz">${escHtml(r.location)}</span>
+    </div>`;
+            }).join('');
+            nameAcList.classList.add('open');
+
+            nameAcList.querySelectorAll('.autocomplete-item').forEach(el => {
+                el.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    selectNameAc(parseInt(el.dataset.index));
+                });
+            });
+        }
+
+        function selectNameAc(index) {
+            const person = nameAcItems[index];
+            if (!person) return;
+            nameInput.value = person.name;
+            locationInput.value = person.location;
+
+            // Set timezone
+            const tzIdx = TZ_OPTIONS.findIndex(o => o.tz === person.tz);
+            if (tzIdx >= 0) tzSelect.selectedIndex = tzIdx;
+            else tzSelect.value = person.tz;
+            tzResolved.textContent = '✓ ' + person.tz;
+
+            nameAcList.classList.remove('open');
+            nameAcItems = [];
+            nameAcIndex = -1;
+        }
+
+        nameInput.addEventListener('input', () => {
+            const results = searchRoster(nameInput.value);
+            showNameAc(results);
+        });
+
+        nameInput.addEventListener('keydown', (e) => {
+            if (!nameAcList.classList.contains('open')) {
+                if (e.key === 'Enter') locationInput.focus();
+                return;
+            }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                nameAcIndex = Math.min(nameAcIndex + 1, nameAcItems.length - 1);
+                nameAcList.querySelectorAll('.autocomplete-item').forEach((el, i) => el.classList.toggle('active', i === nameAcIndex));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                nameAcIndex = Math.max(nameAcIndex - 1, 0);
+                nameAcList.querySelectorAll('.autocomplete-item').forEach((el, i) => el.classList.toggle('active', i === nameAcIndex));
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (nameAcIndex >= 0) selectNameAc(nameAcIndex);
+                else if (nameAcItems.length > 0) selectNameAc(0);
+                else locationInput.focus();
+            } else if (e.key === 'Escape') {
+                nameAcList.classList.remove('open');
+            }
+        });
+
+        nameInput.addEventListener('blur', () => {
+            setTimeout(() => nameAcList.classList.remove('open'), 150);
+        });
+
+        function addCoauthor() {
+            const name = nameInput.value.trim();
+            const locValue = document.getElementById('locationInput').value.trim();
+            const tz = tzSelect.value;
+            if (!name) { nameInput.focus(); return; }
+
+            const tzLabel = TZ_OPTIONS.find(o => o.tz === tz)?.label || tz;
+            const loc = locValue || tzLabel;
+
+            // Add to active list
+            coauthors.push({ id: Date.now(), name, location: loc, tz });
+
+            // Save to roster (update if name exists, so location/tz stay current)
+            roster[name.toLowerCase()] = { name, location: loc, tz };
+
+            save();
+            render();
+
+            nameInput.value = '';
+            locationInput.value = '';
+            tzResolved.textContent = '';
+            if (matchIdx >= 0) tzSelect.selectedIndex = matchIdx;
+            nameInput.focus();
+        }
+
+        function removeCoauthor(id) {
+            // Remove from active only — stays in roster
+            coauthors = coauthors.filter(c => c.id !== id);
+            save();
+            render();
+        }
+
+        function getOffsetDiff(tz) {
+            const now = new Date();
+            const here = new Date(now.toLocaleString('en-US', { timeZone: userTz }));
+            const there = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+            return Math.round((there - here) / (1000 * 60 * 60));
+        }
+
+        function formatOffsetLabel(diff) {
+            if (diff === 0) return { text: 'Same time', cls: 'offset-same' };
+            const sign = diff > 0 ? '+' : '';
+            const abs = Math.abs(diff);
+            const cls = abs <= 3 ? 'offset-close' : 'offset-far';
+            return { text: `${sign}${diff}h from you`, cls };
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function render() {
+            const grid = document.getElementById('clocksGrid');
+            const empty = document.getElementById('emptyState');
+            const bar = document.getElementById('scheduleBar');
+
+            if (coauthors.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = '';
+                bar.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            bar.style.display = '';
+
+            grid.innerHTML = coauthors.map((c, i) => {
+                const diff = getOffsetDiff(c.tz);
+                const offset = formatOffsetLabel(diff);
+                return `
+      <div class="clock-card" style="animation-delay: ${i * 0.05}s" data-tz="${c.tz}" data-id="${c.id}">
+        <button class="remove-btn" onclick="removeCoauthor(${c.id})" title="Remove">&times;</button>
+        <div class="clock-header">
+          <span class="clock-name">${escHtml(c.name)}</span>
+          <span class="clock-location">${escHtml(c.location)}</span>
+          <span class="clock-offset ${offset.cls}">${offset.text}</span>
+        </div>
+        <div class="clock-times">
+          <div class="clock-col">
+            <div class="clock-col-label">Now</div>
+            <div class="clock-col-time" id="time-${c.id}">--:--</div>
+            <div class="clock-col-date" id="date-${c.id}"></div>
+          </div>
+          <div class="clock-divider"></div>
+          <div class="clock-col" id="sched-col-${c.id}" style="display:none;">
+            <div class="clock-col-label">If you call</div>
+            <div class="clock-col-time" id="sched-time-${c.id}">--:--</div>
+            <div class="clock-col-date" id="sched-date-${c.id}"></div>
+          </div>
+        </div>
+      </div>`;
+            }).join('');
+
+            updateTimes();
+            updateSchedule();
+        }
+
+        function updateTimes() {
+            const now = new Date();
+            const localDateStr = now.toLocaleDateString('en-US', { timeZone: userTz, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+            coauthors.forEach(c => {
+                const timeEl = document.getElementById(`time-${c.id}`);
+                const dateEl = document.getElementById(`date-${c.id}`);
+                if (!timeEl) return;
+                timeEl.textContent = now.toLocaleTimeString('en-US', {
+                    timeZone: c.tz, hour: '2-digit', minute: '2-digit', hour12: true
+                });
+
+                const theirDateStr = now.toLocaleDateString('en-US', { timeZone: c.tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+                const theirDisplay = now.toLocaleDateString('en-US', { timeZone: c.tz, weekday: 'short', month: 'short', day: 'numeric' });
+
+                // Compare dates to get relative label
+                const [lm, ld, ly] = localDateStr.split('/').map(Number);
+                const [tm, td, ty] = theirDateStr.split('/').map(Number);
+                const localDate = new Date(ly, lm - 1, ld);
+                const theirDate = new Date(ty, tm - 1, td);
+                const diffDays = Math.round((theirDate - localDate) / (1000 * 60 * 60 * 24));
+
+                let relLabel = '';
+                if (diffDays === 0) relLabel = ' (Today)';
+                else if (diffDays === 1) relLabel = ' (Tomorrow)';
+                else if (diffDays === -1) relLabel = ' (Yesterday)';
+
+                dateEl.textContent = theirDisplay + relLabel;
+            });
+        }
+
+        function updateSchedule() {
+            const timeInput = document.getElementById('scheduleTime');
+            if (!timeInput || coauthors.length === 0) return;
+            const [h, m] = timeInput.value.split(':').map(Number);
+            const now = new Date();
+            const local = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+            const localDateStr = local.toLocaleDateString('en-US', { timeZone: userTz, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+            coauthors.forEach(c => {
+                const col = document.getElementById(`sched-col-${c.id}`);
+                const timeEl = document.getElementById(`sched-time-${c.id}`);
+                const dateEl = document.getElementById(`sched-date-${c.id}`);
+                if (!col || !timeEl) return;
+                col.style.display = '';
+
+                const theirTime = local.toLocaleTimeString('en-US', {
+                    timeZone: c.tz, hour: 'numeric', minute: '2-digit', hour12: true
+                });
+                const theirDateStr = local.toLocaleDateString('en-US', { timeZone: c.tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+                const theirDisplay = local.toLocaleDateString('en-US', { timeZone: c.tz, weekday: 'short', month: 'short', day: 'numeric' });
+                const theirHour = parseInt(local.toLocaleString('en-US', { timeZone: c.tz, hour: 'numeric', hour12: false }));
+                const isOdd = theirHour < 8 || theirHour >= 22;
+
+                // Relative label
+                const [lm, ld, ly] = localDateStr.split('/').map(Number);
+                const [tm, td, ty] = theirDateStr.split('/').map(Number);
+                const localDate = new Date(ly, lm - 1, ld);
+                const theirDate = new Date(ty, tm - 1, td);
+                const diffDays = Math.round((theirDate - localDate) / (1000 * 60 * 60 * 24));
+
+                let relLabel = '';
+                if (diffDays === 0) relLabel = ' (Today)';
+                else if (diffDays === 1) relLabel = ' (Tomorrow)';
+                else if (diffDays === -1) relLabel = ' (Yesterday)';
+
+                timeEl.textContent = theirTime;
+                timeEl.classList.toggle('warn', isOdd);
+                dateEl.textContent = theirDisplay + relLabel + (isOdd ? ' ⚠️' : '');
+            });
+        }
+
+        document.getElementById('scheduleTime').addEventListener('input', updateSchedule);
+        setInterval(updateTimes, 1000);
+        render();
+    </script>
+</body>
+
+</html>
