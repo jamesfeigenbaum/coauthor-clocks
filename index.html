@@ -300,10 +300,6 @@
             transform: translateY(-2px);
         }
 
-        .user-card {
-            border-left: 3px solid var(--accent);
-        }
-
         .clock-card .remove-btn {
             position: absolute;
             top: 0.75rem;
@@ -1030,46 +1026,26 @@
             return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        function renderUserCard() {
-            const tzLabel = TZ_OPTIONS.find(o => o.tz === userTz)?.label || userTz;
-            return `
-      <div class="clock-card user-card" style="animation-delay:0s">
-        <div class="clock-header">
-          <span class="clock-name">You</span>
-          <span class="clock-location">${escHtml(tzLabel)}</span>
-          <span class="clock-offset offset-same">Your time</span>
-        </div>
-        <div class="clock-times">
-          <div class="clock-col">
-            <div class="clock-col-label">Now</div>
-            <div class="clock-col-time" id="time-user">--:--</div>
-            <div class="clock-col-date" id="date-user"></div>
-          </div>
-        </div>
-      </div>`;
-        }
-
         function render() {
             const grid = document.getElementById('clocksGrid');
             const empty = document.getElementById('emptyState');
             const bar = document.getElementById('scheduleBar');
 
             if (coauthors.length === 0) {
-                grid.innerHTML = renderUserCard();
+                grid.innerHTML = '';
                 empty.style.display = '';
                 bar.style.display = 'none';
-                updateTimes();
                 return;
             }
 
             empty.style.display = 'none';
             bar.style.display = '';
 
-            grid.innerHTML = renderUserCard() + coauthors.map((c, i) => {
+            grid.innerHTML = coauthors.map((c, i) => {
                 const diff = getOffsetDiff(c.tz);
                 const offset = formatOffsetLabel(diff);
                 return `
-      <div class="clock-card" style="animation-delay: ${(i + 1) * 0.05}s" data-tz="${c.tz}" data-id="${c.id}">
+      <div class="clock-card" style="animation-delay: ${i * 0.05}s" data-tz="${c.tz}" data-id="${c.id}">
         <button class="remove-btn" onclick="removeCoauthor(${c.id})" title="Remove">&times;</button>
         <div class="clock-header">
           <span class="clock-name">${escHtml(c.name)}</span>
@@ -1099,18 +1075,6 @@
         function updateTimes() {
             const now = new Date();
             const localDateStr = now.toLocaleDateString('en-US', { timeZone: userTz, year: 'numeric', month: '2-digit', day: '2-digit' });
-
-            // Update user card
-            const userTimeEl = document.getElementById('time-user');
-            const userDateEl = document.getElementById('date-user');
-            if (userTimeEl) {
-                userTimeEl.textContent = now.toLocaleTimeString('en-US', {
-                    timeZone: userTz, hour: '2-digit', minute: '2-digit', hour12: true
-                });
-                userDateEl.textContent = now.toLocaleDateString('en-US', {
-                    timeZone: userTz, weekday: 'short', month: 'short', day: 'numeric'
-                });
-            }
 
             coauthors.forEach(c => {
                 const timeEl = document.getElementById(`time-${c.id}`);
