@@ -90,6 +90,24 @@
             font-size: 0.95rem;
         }
 
+        .btn-reset {
+            margin-top: 0.6rem;
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .btn-reset:hover {
+            color: var(--red);
+            background: var(--red-light);
+        }
+
         /* Add form */
         .add-form {
             background: var(--card-bg);
@@ -482,6 +500,7 @@
         <header>
             <h1>Coauthor Clocks</h1>
             <p>Stop doing timezone math in your head</p>
+            <button class="btn-reset" onclick="clearAll()">Reset saved data</button>
         </header>
 
         <div class="add-form">
@@ -1003,6 +1022,14 @@
         function removeCoauthor(id) {
             // Remove from active only — stays in roster
             coauthors = coauthors.filter(c => c.id !== id);
+            save();
+            render();
+        }
+
+        function clearAll() {
+            if (!confirm('Clear all saved coauthors and roster?')) return;
+            coauthors = [];
+            roster = {};
             save();
             render();
         }
